@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jerônimo Leite | Automação de processos</title>
+<meta name="description" content="Jerônimo Leite transforma processos que vivem em e-mail e planilha solta em fluxos automáticos, com Pipefy, Google Apps Script, Python e IA.">
+<meta property="og:title" content="Jerônimo Leite | Automação de processos">
+<meta property="og:description" content="Processos que viviam em e-mail e planilha, agora rodando sozinhos.">
+<meta property="og:image" content="https://jjlosmak.github.io/assets/og.png">
+<meta name="theme-color" content="#0B1A33">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fundo: #0B1A33;
+    --painel: #12264A;
+    --linha: #223A66;
+    --texto: #E8EEFA;
+    --suave: #93A6CA;
+    --ordem: #3D8BFF;
+    --caos: #FF8A3D;
+    --sombra-texto: rgba(11, 26, 51, .85);
+    --display: "Chakra Petch", "Segoe UI", sans-serif;
+    --corpo: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    color-scheme: dark;
+  }
+  :root[data-tema="claro"] {
+    --fundo: #EEF3FB;
+    --painel: #FFFFFF;
+    --linha: #CBD7EA;
+    --texto: #0B1A33;
+    --suave: #4A5D80;
+    --ordem: #1462E0;
+    --caos: #D9600F;
+    --sombra-texto: rgba(238, 243, 251, .85);
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--fundo); color: var(--texto); font: 17px/1.6 var(--corpo); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  img { max-width: 100%; display: block; }
+  :focus-visible { outline: 2px solid var(--ordem); outline-offset: 3px; border-radius: 2px; }
+  .container { width: min(1160px, 100% - 32px); margin-inline: auto; }
+
+  /* ---------- topo ---------- */
+  .topo { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--fundo) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--linha); }
+  .topo .container { display: flex; align-items: center; gap: 24px; height: 60px; }
+  .marca { font: 700 20px/1 var(--display); text-decoration: none; letter-spacing: .5px; display: flex; align-items: center; gap: 10px; }
+  .marca svg { width: 26px; height: 26px; }
+  .menu { margin-left: auto; display: flex; gap: 22px; }
+  .menu a { text-decoration: none; color: var(--suave); font-size: 15px; font-weight: 500; }
+  .menu a:hover { color: var(--texto); }
+  .tema { background: none; border: 1px solid var(--linha); color: var(--texto); border-radius: 999px; width: 36px; height: 36px; cursor: pointer; display: grid; place-items: center; }
+  .tema svg { width: 18px; height: 18px; }
+  @media (max-width: 640px) { .menu { gap: 14px; } .menu a { font-size: 14px; } .marca span { display: none; } }
+
+  /* ---------- abertura ---------- */
+  .abertura { padding: 56px 0 0; }
+  .nome { font: 700 clamp(44px, 8.4vw, 112px)/.92 var(--display); margin: 0; letter-spacing: -1px; }
+  .nome .linha-2 { display: block; color: transparent; -webkit-text-stroke: 1.5px var(--texto); }
+  .intro { display: grid; grid-template-columns: 1fr auto; gap: 24px 48px; align-items: end; margin-top: 26px; }
+  .intro p { margin: 0; max-width: 34ch; font-size: clamp(18px, 2.1vw, 22px); line-height: 1.45; }
+  .intro p b { font-weight: 600; }
+  .acoes { display: flex; gap: 12px; flex-wrap: wrap; }
+  .botao { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font: 600 15px/1 var(--corpo); padding: 13px 18px; border-radius: 6px; border: 1.5px solid var(--ordem); }
+  .botao.cheio { background: var(--ordem); color: #fff; }
+  .botao.vazio { color: var(--texto); }
+  .botao.vazio:hover { background: color-mix(in srgb, var(--ordem) 14%, transparent); }
+  @media (max-width: 760px) { .intro { grid-template-columns: 1fr; } }
+
+  /* palco do fluxo */
+  .palco { position: relative; margin-top: 40px; height: min(56vh, 520px); min-height: 340px; border-top: 1px solid var(--linha); border-bottom: 1px solid var(--linha); cursor: crosshair; touch-action: pan-y; }
+  .palco canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .rotulos { position: absolute; inset: auto 0 14px 0; display: grid; grid-template-columns: 1fr 1fr 1fr; pointer-events: none; font: 500 13px/1.3 var(--mono); }
+  .rotulos span { padding-inline: 16px; color: var(--suave); }
+  .rotulos .r-caos { color: var(--caos); }
+  .rotulos .r-porta { text-align: center; color: var(--ordem); }
+  .rotulos .r-ordem { text-align: right; color: var(--ordem); }
+  .contador { position: absolute; top: 14px; right: 16px; text-align: right; pointer-events: none; font-family: var(--mono); }
+  .contador strong { display: block; font: 600 30px/1 var(--display); color: var(--texto); font-variant-numeric: tabular-nums; }
+  .contador small { color: var(--suave); font-size: 12.5px; }
+  .dica { position: absolute; top: 14px; left: 16px; font: 13px/1.3 var(--mono); color: var(--suave); pointer-events: none; max-width: 26ch; }
+  @media (max-width: 640px) { .rotulos { font-size: 11.5px; } .rotulos span { padding-inline: 10px; } .dica { display: none; } }
+
+  /* ---------- seções ---------- */
+  section.bloco { padding: 96px 0 24px; scroll-margin-top: 60px; }
+  .titulo { font: 700 clamp(30px, 4.4vw, 48px)/1.05 var(--display); margin: 0 0 8px; }
+  .sub { color: var(--suave); margin: 0 0 40px; max-width: 60ch; }
+
+  /* projetos: cada um é um caso, não um cartão de vitrine */
+  .caso { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 32px; padding: 36px 0; border-top: 1px solid var(--linha); }
+  .caso:last-child { border-bottom: 1px solid var(--linha); }
+  .tela { border: 1px solid var(--linha); border-radius: 8px; overflow: hidden; background: var(--painel); aspect-ratio: 16 / 10; }
+  .tela img { width: 100%; height: 100%; object-fit: cover; object-position: top left; }
+  .tela pre { margin: 0; padding: 22px; font: 13.5px/1.7 var(--mono); color: var(--suave); white-space: pre-wrap; height: 100%; }
+  .tela pre .k { color: var(--ordem); } .tela pre .c { color: var(--caos); } .tela pre .t { color: var(--texto); }
+  .caso h3 { font: 700 26px/1.15 var(--display); margin: 0 0 6px; }
+  .estado { display: inline-block; font: 500 12.5px/1 var(--mono); padding: 5px 9px; border-radius: 4px; margin-bottom: 14px; }
+  .estado.prod { background: color-mix(in srgb, var(--ordem) 20%, transparent); color: var(--ordem); }
+  .estado.val { background: color-mix(in srgb, var(--caos) 18%, transparent); color: var(--caos); }
+  .estado.lab { border: 1px solid var(--linha); color: var(--suave); }
+  .etapas { list-style: none; margin: 0 0 18px; padding: 0; display: grid; gap: 12px; }
+  .etapas li { display: grid; grid-template-columns: 104px 1fr; gap: 14px; }
+  .etapas li span { font: 500 13px/1.6 var(--mono); padding-top: 2px; }
+  .etapas li:nth-child(1) span { color: var(--caos); }
+  .etapas li:nth-child(2) span { color: var(--ordem); }
+  .etapas li:nth-child(3) span { color: var(--texto); }
+  .etapas p { margin: 0; color: var(--suave); }
+  .etapas li:nth-child(3) p { color: var(--texto); }
+  .stack { font: 13px/1.5 var(--mono); color: var(--suave); margin: 0 0 18px; }
+  .links { display: flex; gap: 18px; flex-wrap: wrap; }
+  .links a { font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--ordem); padding-bottom: 2px; }
+  .links a:hover { color: var(--ordem); }
+  @media (max-width: 860px) { .caso { grid-template-columns: 1fr; gap: 20px; } .etapas li { grid-template-columns: 1fr; gap: 2px; } }
+
+  /* sobre */
+  .sobre { display: grid; grid-template-columns: 260px 1fr; gap: 48px; align-items: start; }
+  .foto { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--ordem); }
+  .foto img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); mix-blend-mode: luminosity; opacity: .92; }
+  .sobre-texto p { margin: 0 0 16px; max-width: 62ch; }
+  .trajeto { list-style: none; padding: 0; margin: 28px 0 0; border-left: 2px solid var(--linha); }
+  .trajeto li { position: relative; padding: 0 0 18px 22px; }
+  .trajeto li::before { content: ""; position: absolute; left: -7px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: var(--fundo); border: 2px solid var(--caos); }
+  .trajeto li:last-child::before { background: var(--ordem); border-color: var(--ordem); }
+  .trajeto b { display: block; font-weight: 600; }
+  .trajeto span { color: var(--suave); font-size: 15.5px; }
+  .ferramentas { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 24px; margin-top: 40px; }
+  .ferramentas h4 { font: 600 16px/1.2 var(--display); margin: 0 0 8px; }
+  .ferramentas p { margin: 0; color: var(--suave); font-size: 15.5px; }
+  @media (max-width: 760px) { .sobre { grid-template-columns: 1fr; gap: 28px; } .foto { width: 200px; } }
+
+  /* contato */
+  .contato { padding: 110px 0 60px; }
+  .email { font: 700 clamp(26px, 5.4vw, 64px)/1.05 var(--display); text-decoration: none; word-break: break-word; border-bottom: 3px solid var(--ordem); }
+  .email:hover { color: var(--ordem); }
+  .redes { display: flex; gap: 24px; margin-top: 28px; flex-wrap: wrap; }
+  .redes a { font-weight: 600; text-decoration: none; color: var(--suave); }
+  .redes a:hover { color: var(--texto); }
+  footer { border-top: 1px solid var(--linha); padding: 24px 0 40px; color: var(--suave); font-size: 14px; }
+
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+<header class="topo">
+  <div class="container">
+    <a class="marca" href="#inicio" aria-label="Início">
+      <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="5" cy="6" r="2.4" fill="var(--caos)"/><circle cx="8" cy="19" r="2.4" fill="var(--caos)"/><rect x="11.5" y="3" width="3" height="20" rx="1" fill="var(--ordem)"/><rect x="17" y="8" width="8" height="2.6" rx="1.3" fill="var(--ordem)"/><rect x="17" y="15.4" width="8" height="2.6" rx="1.3" fill="var(--ordem)"/></svg>
+      <span>Jerônimo</span>
+    </a>
+    <nav class="menu" aria-label="Seções">
+      <a href="#projetos">Projetos</a>
+      <a href="#sobre">Sobre</a>
+      <a href="#contato">Contato</a>
+    </nav>
+    <button class="tema" id="tema" type="button" aria-label="Alternar tema claro e escuro">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="inicio">
+  <section class="abertura">
+    <div class="container">
+      <h1 class="nome">Jerônimo<span class="linha-2">Leite</span></h1>
+      <div class="intro">
+        <p>Pego processos que vivem em <b>e-mail e planilha solta</b> e transformo em <b>fluxos que rodam sozinhos</b>.</p>
+        <div class="acoes">
+          <a class="botao cheio" href="#projetos">Ver projetos</a>
+          <a class="botao vazio" href="#contato">Falar comigo</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="palco" id="palco" role="img" aria-label="Animação: pontos laranja se movem de forma desordenada, passam por uma porta azul chamada automação e saem organizados em faixas azuis.">
+      <canvas id="fluxo"></canvas>
+      <div class="dica">Mexa o mouse para bagunçar. Clique para jogar pedidos novos.</div>
+      <div class="contador" aria-live="off"><strong id="total">0</strong><small>pedidos organizados</small></div>
+      <div class="rotulos" aria-hidden="true">
+        <span class="r-caos">como chega</span>
+        <span class="r-porta">automação</span>
+        <span class="r-ordem">como sai</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloco" id="projetos">
+    <div class="container">
+      <h2 class="titulo">Projetos</h2>
+      <p class="sub">Problemas reais de uma editora e de um mestrado universitário. Os dados das versões públicas são fictícios; o código e a lógica são os mesmos.</p>
+
+      <article class="caso">
+        <a class="tela" href="https://jjlosmak.github.io/painel-acompanhamento-pipefy/" aria-label="Abrir a demonstração do Painel de Acompanhamento">
+          <img src="https://raw.githubusercontent.com/jjlosmak/painel-acompanhamento-pipefy/main/docs/orientador.png" alt="Painel com abas por etapa e cartões de produtos atrasados destacados em vermelho" loading="lazy">
+        </a>
+        <div>
+          <span class="estado val">em validação com a coordenação</span>
+          <h3>Painel de Acompanhamento</h3>
+          <ol class="etapas">
+            <li><span>problema</span><p>A coordenação não tem conta no Pipefy, que limita novos usuários. Tudo chegava por e-mail, sem visão do todo.</p></li>
+            <li><span>automação</span><p>Painel web só de leitura, com login seguro, que mostra cada etapa do pipe, os atrasos e os ajustes pedidos.</p></li>
+            <li><span>resultado</span><p>Já lê mais de 50 pedidos reais. A coordenação vê quem está parado e dá o parecer sem sair do painel.</p></li>
+          </ol>
+          <p class="stack">Apps Script, API GraphQL do Pipefy, JavaScript</p>
+          <div class="links">
+            <a href="https://jjlosmak.github.io/painel-acompanhamento-pipefy/">Testar a demo</a>
+            <a href="https://github.com/jjlosmak/painel-acompanhamento-pipefy">Ver o código</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="caso">
+        <div class="tela" aria-hidden="true"><pre><span class="c">novo pedido</span> <span class="t">card 4821</span>
+  cpf <span class="t">000.***.***-91</span>
+  <span class="k">buscarAluno()</span>
+  nome   <span class="t">Amanda Ribeiro Coelho</span>
+  turma  <span class="t">Turma 2025.1</span>
+  <span class="k">status</span> <span class="t">Aluno identificado</span>
+  <span class="k">e-mail</span> <span class="t">enviado para a equipe</span>
+</pre></div>
+        <div>
+          <span class="estado prod">em produção</span>
+          <h3>Integração Pipefy + Apps Script</h3>
+          <ol class="etapas">
+            <li><span>problema</span><p>A equipe recebia o aviso de pedido novo sem saber quem era o aluno, e não dava para expor a lista de alunos no formulário público.</p></li>
+            <li><span>automação</span><p>O aluno informa só o CPF. Um script busca nome e turma numa base protegida, preenche o card e só então libera o e-mail.</p></li>
+            <li><span>resultado</span><p>Mais de 50 pedidos processados sozinhos, cerca de 10 minutos de conferência economizados em cada um, mais de 8 horas no total.</p></li>
+          </ol>
+          <p class="stack">Apps Script, API GraphQL, Service Account, testes automáticos</p>
+          <div class="links">
+            <a href="https://github.com/jjlosmak/integracao-pipefy-apps-script">Ver o código</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="caso">
+        <a class="tela" href="https://jjlosmak.github.io/sistema-carga-horaria/" aria-label="Abrir a demonstração do Sistema de Carga Horária">
+          <img src="https://raw.githubusercontent.com/jjlosmak/sistema-carga-horaria/main/docs/painel.png" alt="Painel com indicadores de aulas previstas e dadas, gráfico semanal e situação de cada professor" loading="lazy">
+        </a>
+        <div>
+          <span class="estado lab">feito para a coordenação</span>
+          <h3>Sistema de Carga Horária Docente</h3>
+          <ol class="etapas">
+            <li><span>problema</span><p>Várias planilhas Excel, uma por turma, que quebravam de um computador para outro e não davam visão geral.</p></li>
+            <li><span>automação</span><p>Primeiro padronizei as planilhas num modelo único. Depois troquei tudo por um sistema web com painel, lançamentos e ficha individual.</p></li>
+            <li><span>resultado</span><p>A coordenação acompanha previsto e dado de todo o corpo docente num lugar só e imprime a ficha de cada professor.</p></li>
+          </ol>
+          <p class="stack">Apps Script, Google Sheets, JavaScript</p>
+          <div class="links">
+            <a href="https://jjlosmak.github.io/sistema-carga-horaria/">Testar a demo</a>
+            <a href="https://github.com/jjlosmak/sistema-carga-horaria">Ver o código</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="caso">
+        <a class="tela" href="https://github.com/jjlosmak/gerador-folha-de-rosto" aria-label="Ver o Gerador de Folha de Rosto no GitHub">
+          <img src="https://raw.githubusercontent.com/jjlosmak/gerador-folha-de-rosto/main/docs/livro-autoral.png" alt="Folha de rosto e verso gerados, com a moldura da ficha catalográfica" loading="lazy">
+        </a>
+        <div>
+          <span class="estado lab">ferramenta da editora</span>
+          <h3>Gerador de Folha de Rosto</h3>
+          <ol class="etapas">
+            <li><span>problema</span><p>Cada livro precisava de folha de rosto e expediente no padrão da biblioteca. Um título errado em um lugar devolvia o pedido de ISBN.</p></li>
+            <li><span>automação</span><p>Os dados da obra ficam num único arquivo. Um script gera as duas páginas sempre no mesmo padrão e avisa o que está faltando.</p></li>
+            <li><span>resultado</span><p>Mudou o título? Uma linha e pronto. Sem layout diferente a cada livro e sem retrabalho com a biblioteca.</p></li>
+          </ol>
+          <p class="stack">Python, ReportLab, GitHub Actions</p>
+          <div class="links">
+            <a href="https://github.com/jjlosmak/gerador-folha-de-rosto">Ver o código</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="caso">
+        <div class="tela" aria-hidden="true"><pre><span class="k">Run workflow</span>  Build macOS App
+  <span class="t">✓</span> configurar Python 3.11
+  <span class="t">✓</span> instalar pdfplumber
+  <span class="t">✓</span> PyInstaller → PDF Extractor.app
+  <span class="t">✓</span> compactar
+<span class="c">artifact</span> <span class="t">PDF-Extractor-macOS.zip</span>
+</pre></div>
+        <div>
+          <span class="estado lab">ferramenta interna</span>
+          <h3>PDF Extractor</h3>
+          <ol class="etapas">
+            <li><span>problema</span><p>Copiar texto de dezenas de PDFs, um por um, para quem usa Mac e não tem Python instalado.</p></li>
+            <li><span>automação</span><p>App de janela que lê a pasta inteira e limpa cabeçalhos repetidos. O próprio GitHub gera o aplicativo para Mac.</p></li>
+            <li><span>resultado</span><p>Quem recebe só abre o app, escolhe a pasta e ganha um relatório com o texto de todos os PDFs.</p></li>
+          </ol>
+          <p class="stack">Python, Tkinter, PyInstaller, GitHub Actions</p>
+          <div class="links">
+            <a href="https://github.com/jjlosmak/Extractor_MAC">Ver o código</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="bloco" id="sobre">
+    <div class="container">
+      <h2 class="titulo">Sobre</h2>
+      <p class="sub">Formado em Análise e Desenvolvimento de Sistemas, em Fortaleza.</p>
+      <div class="sobre">
+        <div class="foto"><img src="assets/jeronimo.jpg" alt="Foto de Jerônimo sorrindo" width="288" height="288"></div>
+        <div class="sobre-texto">
+          <p>Meu trabalho é ficar no meio do caminho entre a ferramenta e quem usa. Entendo como o processo funciona de verdade, acho onde ele trava e construo a solução, seja um pipe no Pipefy, um script, um sistema web ou um agente de IA.</p>
+          <p>Hoje faço isso na editora e no núcleo de inovação de uma universidade, automatizando fluxos acadêmicos e editoriais de ponta a ponta, sempre com cuidado com dados pessoais (LGPD).</p>
+          <ul class="trajeto">
+            <li><b>Professor de informática básica</b><span>Aprendi a explicar tecnologia para quem nunca usou.</span></li>
+            <li><b>Vendas</b><span>Aprendi a ouvir o cliente antes de oferecer qualquer coisa.</span></li>
+            <li><b>Implantação e suporte de sistemas PDV e MFE</b><span>Coloquei sistemas para rodar no cliente e treinei quem ia usar.</span></li>
+            <li><b>Editora e inovação tecnológica, numa universidade</b><span>Automação de processos, diagramação, IA aplicada e suporte a professores.</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="ferramentas">
+        <div><h4>Automação</h4><p>Pipefy, Google Apps Script, API GraphQL, webhooks, GitHub Actions</p></div>
+        <div><h4>Código</h4><p>Python, JavaScript, HTML e CSS, Google Sheets e Excel</p></div>
+        <div><h4>IA aplicada</h4><p>Agentes e skills com Claude, automação de conferência de documentos e de e-mails</p></div>
+        <div><h4>Estudando agora</h4><p>n8n, SQL e Power BI</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="contato" id="contato">
+    <div class="container">
+      <h2 class="titulo">Tem um processo que vive no e-mail?</h2>
+      <p class="sub">Me conta como ele funciona hoje. Eu respondo.</p>
+      <a class="email" href="mailto:jeronimosilva0301@gmail.com">jeronimosilva0301@gmail.com</a>
+      <div class="redes">
+        <a href="https://www.linkedin.com/in/jer%C3%B4nimo-silva-6a496a219/">LinkedIn</a>
+        <a href="https://github.com/jjlosmak">GitHub</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">Feito à mão, sem framework. A animação do topo roda em canvas puro.</div>
+</footer>
+
+<script>
+/* ---------- tema ---------- */
+(function () {
+  const raiz = document.documentElement;
+  let salvo = null;
+  try { salvo = localStorage.getItem('tema'); } catch (e) {}
+  const prefereClaro = window.matchMedia('(prefers-color-scheme: light)').matches;
+  if (salvo === 'claro' || (!salvo && prefereClaro)) raiz.dataset.tema = 'claro';
+  document.getElementById('tema').addEventListener('click', () => {
+    const claro = raiz.dataset.tema !== 'claro';
+    if (claro) raiz.dataset.tema = 'claro'; else delete raiz.dataset.tema;
+    try { localStorage.setItem('tema', claro ? 'claro' : 'escuro'); } catch (e) {}
+    window.dispatchEvent(new Event('temamudou'));
+  });
+})();
+
+/* ---------- o fluxo: desordem → automação → ordem ---------- */
+(function () {
+  const palco = document.getElementById('palco');
+  const canvas = document.getElementById('fluxo');
+  const ctx = canvas.getContext('2d');
+  const totalEl = document.getElementById('total');
+  const reduzir = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  let W = 0, H = 0, dpr = 1, portaX = 0, faixas = [], cores = {};
+  let particulas = [], organizados = 0, mouse = { x: -999, y: -999, ativo: false };
+  const FAIXAS = 5;
+
+  function lerCores() {
+    const s = getComputedStyle(document.documentElement);
+    cores = { caos: s.getPropertyValue('--caos').trim(), ordem: s.getPropertyValue('--ordem').trim(),
+              linha: s.getPropertyValue('--linha').trim(), fundo: s.getPropertyValue('--fundo').trim() };
+  }
+
+  function medir() {
+    const r = palco.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = r.width; H = r.height;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    portaX = W * 0.5;
+    const topo = H * 0.24, base = H * 0.76;
+    faixas = Array.from({ length: FAIXAS }, (_, i) => topo + (base - topo) * i / (FAIXAS - 1));
+    const alvo = Math.round(Math.min(320, Math.max(110, W * H / 2600)));
+    while (particulas.length < alvo) particulas.push(nova(true));
+    particulas.length = alvo;
+  }
+
+  function nova(espalhar, x, y) {
+    return {
+      x: x != null ? x : (espalhar ? Math.random() * portaX * 0.95 : -10 - Math.random() * 40),
+      y: y != null ? y : H * (0.12 + Math.random() * 0.72),
+      vx: 0.3 + Math.random() * 0.5, vy: (Math.random() - .5) * 1.2,
+      fase: Math.random() * Math.PI * 2, ordenado: false, faixa: 0, vel: 0, r: 1.6 + Math.random() * 1.6
+    };
+  }
+
+  function passo(p, t) {
+    if (!p.ordenado) {
+      // desordem: andar sinuoso, puxado aos poucos para a abertura da porta
+      p.fase += 0.04;
+      p.vx += 0.012 + Math.cos(p.fase * 1.3) * 0.03;
+      p.vy += Math.sin(p.fase + p.x * 0.01) * 0.09;
+      const perto = Math.max(0, (p.x - portaX * 0.45) / (portaX * 0.55));
+      p.vy += (H / 2 - p.y) * 0.0045 * perto * perto;
+      if (mouse.ativo) {
+        const dx = p.x - mouse.x, dy = p.y - mouse.y, d2 = dx * dx + dy * dy;
+        if (d2 < 9000) { const f = (9000 - d2) / 9000; p.vx += dx * 0.02 * f; p.vy += dy * 0.02 * f; }
+      }
+      p.vx *= 0.96; p.vy *= 0.94;
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < 8) { p.y = 8; p.vy *= -1; } if (p.y > H - 30) { p.y = H - 30; p.vy *= -1; }
+      if (p.x < -60) p.x = -10;
+      const abertura = H * 0.13;
+      if (p.x >= portaX - 4) {
+        if (Math.abs(p.y - H / 2) < abertura) {
+          p.ordenado = true; p.x = portaX;
+          p.faixa = Math.floor(Math.random() * FAIXAS); p.vel = 2.2 + Math.random() * 1.2;
+          organizados++;
+        } else { p.x = portaX - 6; p.vx = -Math.abs(p.vx) * 0.5; p.vy += (H / 2 - p.y) * 0.02; }
+      }
+    } else {
+      // ordem: segue reto na faixa, em velocidade constante
+      p.y += (faixas[p.faixa] - p.y) * 0.08;
+      p.x += p.vel;
+      if (p.x > W + 20) Object.assign(p, nova(false));
+    }
+  }
+
+  function desenharPorta() {
+    const abertura = H * 0.13, larg = 6;
+    ctx.fillStyle = cores.ordem;
+    ctx.fillRect(portaX - larg / 2, 10, larg, H / 2 - abertura - 10);
+    ctx.fillRect(portaX - larg / 2, H / 2 + abertura, larg, H / 2 - abertura - 30);
+    ctx.strokeStyle = cores.linha; ctx.lineWidth = 1;
+    faixas.forEach(y => { ctx.beginPath(); ctx.moveTo(portaX + 8, y); ctx.lineTo(W, y); ctx.stroke(); });
+  }
+
+  function desenhar() {
+    ctx.clearRect(0, 0, W, H);
+    desenharPorta();
+    for (const p of particulas) {
+      if (p.ordenado) {
+        ctx.fillStyle = cores.ordem;
+        ctx.fillRect(p.x - 18, p.y - 1.5, 18, 3);
+      } else {
+        ctx.fillStyle = cores.caos;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    totalEl.textContent = organizados.toLocaleString('pt-BR');
+  }
+
+  let ultimo = 0;
+  function quadro(t) {
+    if (t - ultimo > 1000 / 61) { for (const p of particulas) passo(p, t); desenhar(); ultimo = t; }
+    if (visivel) requestAnimationFrame(quadro); else rodando = false;
+  }
+
+  // só anima quando o palco está na tela
+  let visivel = true, rodando = false;
+  new IntersectionObserver(e => {
+    visivel = e[0].isIntersecting;
+    if (visivel && !rodando && !reduzir) { rodando = true; requestAnimationFrame(quadro); }
+  }).observe(palco);
+
+  function posicao(ev) { const r = canvas.getBoundingClientRect(); return { x: ev.clientX - r.left, y: ev.clientY - r.top }; }
+  palco.addEventListener('pointermove', ev => { Object.assign(mouse, posicao(ev), { ativo: true }); });
+  palco.addEventListener('pointerleave', () => { mouse.ativo = false; });
+  palco.addEventListener('click', ev => {
+    const { x, y } = posicao(ev);
+    const ox = x < portaX ? x : 20;
+    for (let i = 0; i < 14; i++) {
+      const p = nova(false, ox + (Math.random() - .5) * 30, y + (Math.random() - .5) * 30);
+      p.vx = (Math.random() - .3) * 4; p.vy = (Math.random() - .5) * 4;
+      particulas.push(p);
+    }
+    if (particulas.length > 420) particulas.splice(0, particulas.length - 420);
+    if (reduzir) desenhar();
+  });
+
+  window.addEventListener('resize', () => { medir(); if (reduzir) desenhar(); });
+  window.addEventListener('temamudou', () => { lerCores(); desenhar(); });
+
+  lerCores(); medir();
+  // começa com o fluxo já andando: metade dos pedidos do lado organizado
+  particulas.forEach((p, i) => { if (i % 2) { p.ordenado = true; p.faixa = i % FAIXAS; p.vel = 2.2 + Math.random() * 1.2; p.x = portaX + Math.random() * (W - portaX); p.y = faixas[p.faixa]; } });
+  if (reduzir) desenhar();
+})();
+</script>
+</body>
+</html>
