@@ -120,8 +120,9 @@
 
   /* sobre */
   .sobre { display: grid; grid-template-columns: 260px 1fr; gap: 48px; align-items: start; }
-  .foto { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: var(--ordem); }
-  .foto img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.1); mix-blend-mode: luminosity; opacity: .92; }
+  .foto { position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1; background: #000; }
+  .foto img { width: 100%; height: 100%; object-fit: cover; }
+  .foto { box-shadow: 0 0 0 1px var(--linha), 0 0 0 6px color-mix(in srgb, var(--ordem) 25%, transparent); }
   .sobre-texto p { margin: 0 0 16px; max-width: 62ch; }
   .trajeto { list-style: none; padding: 0; margin: 28px 0 0; border-left: 2px solid var(--linha); }
   .trajeto li { position: relative; padding: 0 0 18px 22px; }
@@ -301,14 +302,14 @@
       <h2 class="titulo">Sobre</h2>
       <p class="sub">Formado em Análise e Desenvolvimento de Sistemas, em Fortaleza.</p>
       <div class="sobre">
-        <div class="foto"><img src="assets/jeronimo.jpg" alt="Foto de Jerônimo sorrindo" width="288" height="288"></div>
+        <div class="foto"><img src="assets/jeronimo.jpg" alt="Foto de Jerônimo sorrindo, de blusa preta" width="400" height="400"></div>
         <div class="sobre-texto">
           <p>Meu trabalho é ficar no meio do caminho entre a ferramenta e quem usa. Entendo como o processo funciona de verdade, acho onde ele trava e construo a solução, seja um pipe no Pipefy, um script, um sistema web ou um agente de IA.</p>
           <p>Hoje faço isso na editora e no núcleo de inovação de uma universidade, onde já trabalhei em mais de 100 livros e obras, automatizando fluxos acadêmicos e editoriais de ponta a ponta, sempre com cuidado com dados pessoais (LGPD).</p>
           <ul class="trajeto">
-            <li><b>Professor de informática básica</b><span>Aprendi a explicar tecnologia para quem nunca usou.</span></li>
             <li><b>Vendas</b><span>Aprendi a ouvir o cliente antes de oferecer qualquer coisa.</span></li>
             <li><b>Implantação e suporte de sistemas PDV e MFE</b><span>Coloquei sistemas para rodar no cliente e treinei quem ia usar.</span></li>
+            <li><b>Professor de informática básica</b><span>Aprendi a explicar tecnologia para quem nunca usou.</span></li>
             <li><b>Editora e inovação tecnológica, numa universidade</b><span>Automação de processos, diagramação, IA aplicada e suporte a professores.</span></li>
           </ul>
         </div>
